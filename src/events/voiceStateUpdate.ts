@@ -94,17 +94,12 @@ export async function handleVoiceStateUpdate(
 
     applyCooldown(member.id, guildId);
 
-    // Send panel to control channel
-    if (settings.control_channel_id) {
-      const controlChannel = newState.guild.channels.cache.get(settings.control_channel_id) as TextChannel | undefined;
-      if (controlChannel) {
-        const data = queries.getTempChannel(tempChannel.id);
-        if (data) {
-          const panel = buildControlPanel(tempChannel, data, settings);
-          const msg = await controlChannel.send({ content: `<@${member.id}>`, ...panel });
-          queries.updateTempChannel(tempChannel.id, { panel_message_id: msg.id });
-        }
-      }
+    // Send panel inside the temp voice channel itself
+    const data = queries.getTempChannel(tempChannel.id);
+    if (data) {
+      const panel = buildControlPanel(tempChannel, data, settings);
+      const msg = await tempChannel.send({ content: `<@${member.id}>`, ...panel }).catch(() => null);
+      if (msg) queries.updateTempChannel(tempChannel.id, { panel_message_id: msg.id });
     }
 
     // Log channel creation
@@ -135,15 +130,6 @@ export async function handleVoiceStateUpdate(
 
     // Channel is empty — delete it
     if (voiceChannel.members.size === 0) {
-      if (data.panel_message_id && settings.control_channel_id) {
-        try {
-          const ctrl = oldState.guild.channels.cache.get(settings.control_channel_id) as TextChannel | undefined;
-          if (ctrl) {
-            const msg = await ctrl.messages.fetch(data.panel_message_id);
-            await msg.delete();
-          }
-        } catch {}
-      }
 
       const channelName = voiceChannel.name;
       queries.deleteTempChannel(oldState.channelId);
@@ -177,14 +163,11 @@ export async function handleVoiceStateUpdate(
       ]);
 
       const updatedData = queries.getTempChannel(oldState.channelId);
-      if (updatedData?.panel_message_id && settings.control_channel_id) {
+      if (updatedData?.panel_message_id) {
         try {
-          const ctrl = oldState.guild.channels.cache.get(settings.control_channel_id) as TextChannel | undefined;
-          if (ctrl) {
-            const msg = await ctrl.messages.fetch(updatedData.panel_message_id);
-            const panel = buildControlPanel(voiceChannel, updatedData, settings);
-            await msg.edit({ content: `<@${newOwner.id}> 👑 You are now the channel owner!`, ...panel });
-          }
+          const msg = await voiceChannel.messages.fetch(updatedData.panel_message_id);
+          const panel = buildControlPanel(voiceChannel, updatedData, settings);
+          await msg.edit({ content: `<@${newOwner.id}> 👑 You are now the channel owner!`, ...panel });
         } catch {}
       }
     }
