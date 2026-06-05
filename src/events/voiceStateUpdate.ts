@@ -94,6 +94,43 @@ export async function handleVoiceStateUpdate(
 
     applyCooldown(member.id, guildId);
 
+    // Send DM welcome message to channel owner
+    try {
+      const { EmbedBuilder, Colors } = await import("discord.js");
+      const dmEmbed = new EmbedBuilder()
+        .setColor(Colors.Blurple)
+        .setAuthor({ name: "🎙️ Your Temporary Channel is Ready!", iconURL: member.user.displayAvatarURL() })
+        .setTitle(`✅ ${tempChannel.name}`)
+        .setDescription(`Your personal voice channel has been created in **${member.guild.name}**!\nOpen the **Text Chat** inside your voice channel to access the control panel.`)
+        .addFields(
+          {
+            name: "🎛️ Quick Controls (in channel text chat)",
+            value: [
+              "🔒 **Lock / Unlock** — control who can join",
+              "🌑 **Hide / Show** — toggle visibility",
+              "✏️ **Rename** — change channel name",
+              "👥 **Limit** — set member cap",
+              "✅ **Permit** — allow a specific user",
+              "⛔ **Reject** — block & remove a user",
+              "👑 **Transfer** — give ownership to another",
+              "🗑️ **Delete** — delete channel immediately",
+            ].join("\n"),
+          },
+          {
+            name: "⚡ Useful Commands",
+            value: [
+              "`/vc setname` — set your default channel name",
+              "`/vc setlimit` — set your default user limit",
+              "`/panel` — resend the control panel",
+            ].join("\n"),
+          }
+        )
+        .setFooter({ text: "The channel auto-deletes when everyone leaves" })
+        .setTimestamp();
+
+      await member.send({ embeds: [dmEmbed] }).catch(() => {});
+    } catch {}
+
     // Send panel inside the temp voice channel itself
     const data = queries.getTempChannel(tempChannel.id);
     if (data) {
