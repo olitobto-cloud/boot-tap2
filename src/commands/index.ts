@@ -1,5 +1,5 @@
 import { Collection } from "discord.js";
-import type { SlashCommandBuilder, SlashCommandSubcommandsOnlyBuilder } from "discord.js";
+import type { SlashCommandBuilder, SlashCommandSubcommandsOnlyBuilder, ChatInputCommandInteraction } from "discord.js";
 import * as setup from "./setup.js";
 import * as panel from "./panel.js";
 import * as blacklist from "./blacklist.js";
@@ -10,7 +10,7 @@ import * as help from "./help.js";
 
 export interface Command {
   data: SlashCommandBuilder | SlashCommandSubcommandsOnlyBuilder;
-  execute: (interaction: any) => Promise<void>;
+  execute: (interaction: ChatInputCommandInteraction) => Promise<void>;
 }
 
 export const commands = new Collection<string, Command>();
