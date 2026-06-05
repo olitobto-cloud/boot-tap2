@@ -188,16 +188,6 @@ export async function handleButton(interaction: ButtonInteraction): Promise<void
     case "vc_delete": {
       await interaction.reply({ content: "🗑️ Deleting your channel...", ephemeral: true });
 
-      if (settings?.control_channel_id && ownedChannel.panel_message_id) {
-        try {
-          const ctrl = guild.channels.cache.get(settings.control_channel_id);
-          if (ctrl?.type === ChannelType.GuildText) {
-            const msg = await (ctrl as import("discord.js").TextChannel).messages.fetch(ownedChannel.panel_message_id);
-            await msg.delete();
-          }
-        } catch {}
-      }
-
       const channelName = voiceChannel.name;
       queries.deleteTempChannel(ownedChannel.channel_id);
       await voiceChannel.delete("Deleted by owner").catch(() => {});
